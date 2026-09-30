@@ -1,0 +1,71 @@
+name: 更新数据并部署页面
+
+on:
+  schedule:
+    # 每 3 小时运行一次（UTC 分钟 23; 换算北京时间 08:23 / 11:23 / 14:23 ...）
+    # 注: GitHub 在负载高峰时可能推迟几分钟执行
+    - cron: '23 */3 * * *'
+  workflow_dispatch: {}   # 支持在 Actions 页面点击 "Run workflow" 手动运行
+
+permissions:
+  contents: write    # 提交更新时间戳（保持仓库活跃）
+  pages: write       # 部署 GitHub Pages
+  id-token: write    # deploy-pages 需要
+
+concurrency:
+  group: update-and-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: 检出本仓库
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 构建 data.js（拉取 Romeo 镜像库最新数据）
+        run: python build.py
+
+      - name: 组装站点文件
+        run: |
+          mkdir -p site
+          cp index.html data.js name_map.json site/
+
+      - name: 上传 Pages 制品
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: 部署到 GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: 记录更新时间
+        # 每 3 小时产生一次小提交，既方便在仓库里看到最近更新时间，
+        # 也避免定时任务因仓库 60 天无活动被 GitHub 自动暂停
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p .state
+          python - <<'PYEOF'
+          import datetime, json
+          raw = open('data.js', encoding='utf-8').read()
+          d = json.loads(raw[len('window.LOON_DATA='):].rstrip(';\n'))
+          with open('.state/last-update.txt', 'w', encoding='utf-8') as f:
+              f.write('上次更新: %s UTC\n' % datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S'))
+              f.write('模块总数: %d\n' % len(d['entries']))
+              f.write('源库提交: %s\n' % d.get('commit', ''))
+          PYEOF
+          git add .state/last-update.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: 更新时间戳"
+            git push
+          fi

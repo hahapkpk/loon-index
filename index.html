@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loon 去广告模块索引 · Romeo</title>
+<style>
+:root{
+  --bg:#f6f6f4; --card:#ffffff; --ink:#1c1e21; --ink2:#6b7280; --ink3:#9aa1ab;
+  --line:#e4e5e2; --line2:#d4d6d2; --accent:#1f7a5c; --accent-soft:#e7f4ee;
+  --warn:#b45309; --warn-soft:#fdf1e0; --blue:#1d4ed8; --blue-soft:#e8effd;
+  --star:#d97706; --radius:10px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141618; --card:#1d2023; --ink:#e8eaec; --ink2:#9aa3ad; --ink3:#6f7880;
+    --line:#2a2e33; --line2:#3a3f45; --accent:#4cc38a; --accent-soft:#173629;
+    --warn:#f0b060; --warn-soft:#3a2d1a; --blue:#7aa2f7; --blue-soft:#1d2a44;
+    --star:#f3b344;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:14px/1.55 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 80px}
+
+/* ---------- header ---------- */
+header{padding:26px 0 14px}
+h1{font-size:22px;margin:0 0 6px;font-weight:700;letter-spacing:.2px}
+h1 .sub{font-size:13px;font-weight:400;color:var(--ink2);margin-left:8px}
+.meta{color:var(--ink2);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.meta b{color:var(--ink);font-weight:600}
+.dot{width:4px;height:4px;border-radius:50%;background:var(--line2);display:inline-block}
+
+/* ---------- controls ---------- */
+.controls{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);
+  backdrop-filter:blur(6px);padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.searchrow{display:flex;gap:10px}
+#q{flex:1;padding:11px 14px;border:1px solid var(--line2);border-radius:var(--radius);
+  background:var(--card);color:var(--ink);font-size:15px;outline:none}
+#q:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+#q::placeholder{color:var(--ink3)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.chip{border:1px solid var(--line2);background:var(--card);color:var(--ink2);border-radius:999px;
+  padding:5px 12px;font-size:13px;cursor:pointer;user-select:none}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .c{opacity:.75;margin-left:4px;font-size:12px}
+select{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;
+  padding:5px 8px;font-size:13px;cursor:pointer}
+label.opt{display:inline-flex;align-items:center;gap:5px;color:var(--ink2);font-size:13px;cursor:pointer;user-select:none}
+label.opt input{accent-color:var(--accent)}
+#reset{display:none}
+.counter{color:var(--ink2);font-size:12.5px;margin:2px 0 10px}
+.counter b{color:var(--ink)}
+
+/* ---------- list ---------- */
+.dayhead{font-size:12.5px;color:var(--ink3);font-weight:600;margin:18px 4px 6px;letter-spacing:.4px}
+.row{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:10px 12px;margin-bottom:6px}
+.row:hover{border-color:var(--line2)}
+.star{background:none;border:none;cursor:pointer;font-size:17px;line-height:1;padding:2px 1px;
+  color:var(--line2);flex:none;margin-top:2px}
+.star.on{color:var(--star)}
+.main{flex:1;min-width:0}
+.t{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.nm{font-size:14.5px;font-weight:600}
+.badge{font-size:11px;padding:1px 7px;border-radius:6px;font-weight:600;flex:none}
+.badge.beta{background:var(--warn-soft);color:var(--warn)}
+.badge.official{background:var(--blue-soft);color:var(--blue)}
+.badge.qbad{background:#fde8e8;color:#b91c1c}
+@media (prefers-color-scheme: dark){.badge.qbad{background:#3a1d1d;color:#f87171}}
+.badge.dep{background:var(--line);color:var(--ink2)}
+.s{color:var(--ink2);font-size:12.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s .mono{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+.side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:118px}
+.date{font-size:12px;color:var(--ink2);white-space:nowrap}
+.date .abs{color:var(--ink3);font-family:var(--mono);font-size:11px;margin-left:5px}
+.acts{display:flex;gap:6px}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:7px;
+  padding:3px 10px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{opacity:.9;color:#fff}
+.detail{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink2)}
+.row.open .detail{display:block}
+.detail .path{font-family:var(--mono);font-size:12px;word-break:break-all;color:var(--ink2)}
+.detail .kv{margin-top:4px}
+.detail .kv b{color:var(--ink);font-weight:600}
+
+/* ---------- group view ---------- */
+.grow{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;cursor:pointer}
+.grow:hover{border-color:var(--line2)}
+.ghead{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.gname{font-size:14.5px;font-weight:600}
+.gcount{font-size:12px;color:var(--ink2)}
+.glatest{margin-left:auto;font-size:12px;color:var(--ink2);white-space:nowrap}
+.gbody{display:none;margin-top:8px;border-top:1px dashed var(--line);padding-top:4px}
+.grow.open .gbody{display:block}
+.gitem{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.gitem:last-child{border-bottom:none}
+.gitem .t2{font-size:13.5px;flex:1;min-width:140px}
+.gitem .by{font-size:12px;color:var(--ink2)}
+.gitem .dt{font-size:12px;color:var(--ink2);font-family:var(--mono)}
+.gitem .acts{flex:none}
+
+/* ---------- misc ---------- */
+#more{margin:16px auto;display:block;padding:9px 26px;font-size:13.5px}
+.empty{text-align:center;color:var(--ink2);padding:60px 0;font-size:14px}
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);background:#111c;color:#fff;
+  padding:9px 18px;border-radius:9px;font-size:13.5px;opacity:0;pointer-events:none;transition:.22s;z-index:99;max-width:80vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{margin-top:34px;color:var(--ink3);font-size:12px;line-height:1.9;border-top:1px solid var(--line);padding-top:14px}
+kbd{font-family:var(--mono);background:var(--card);border:1px solid var(--line2);border-bottom-width:2px;
+  border-radius:5px;padding:0 5px;font-size:11.5px}
+@media (max-width:640px){
+  .side{min-width:96px}
+  .s .desc{display:none}
+  h1{font-size:19px}
+  .wrap{padding:0 10px 70px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Loon 去广告模块索引<span class="sub">来自 ifflagged/Romeo 镜像库</span></h1>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div class="controls">
+    <div class="searchrow">
+      <input id="q" type="search" placeholder="搜索：软件中文名 / 英文名 / 作者 / 文件名（按 / 聚焦）" autocomplete="off">
+    </div>
+    <div class="chips" id="chips">
+      <span class="chip on" data-win="all">全部</span>
+      <span class="chip" data-win="today">今天</span>
+      <span class="chip" data-win="3d">近 3 天</span>
+      <span class="chip" data-win="7d">近 7 天</span>
+      <span class="chip" data-win="30d">近 30 天</span>
+      <span class="chip" id="favchip">★ 我的关注<span class="c" id="favn"></span></span>
+      <span class="dot"></span>
+      <select id="author"><option value="">全部作者</option></select>
+      <select id="channel">
+        <option value="">全部频道</option>
+        <option value="__root">主线</option>
+        <option value="Beta">Beta</option>
+        <option value="Official">官方</option>
+      </select>
+      <select id="sort">
+        <option value="date">按更新时间</option>
+        <option value="name">按名称</option>
+        <option value="author">按作者</option>
+      </select>
+      <label class="opt"><input type="checkbox" id="viewgroup"> 按软件聚合</label>
+      <label class="opt"><input type="checkbox" id="showhidden"> 显示失效/依赖组件</label>
+      <span class="chip" id="reset">重置筛选</span>
+    </div>
+  </div>
+
+  <div class="counter" id="counter"></div>
+  <div id="list"></div>
+  <div style="display:flex;justify-content:center"><button class="btn" id="more" style="display:none">加载更多</button></div>
+
+  <footer>
+    <div>用法：点 <b>复制</b> 得到 raw 源码地址 → Loon「插件 → 右上角 + → URL」粘贴导入；手机上点 <b>导入</b> 可直接唤起 Loon。</div>
+    <div id="foot"></div>
+    <div>快捷键：<kbd>/</kbd> 聚焦搜索 · <kbd>Esc</kbd> 清除搜索。</div>
+    <div>托管版每 3 小时自动更新（GitHub Actions）· <a href="https://github.com/hahapkpk/loon-index/actions/workflows/update-data.yml" target="_blank" rel="noopener">手动触发更新</a> · 本地版改完中文名映射后运行 <kbd>python build.py</kbd> 刷新。</div>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+'use strict';
+var DATA = window.LOON_DATA || {entries:[],generated:'',repo:'',commit:'',count:0};
+var RAW2 = 'https://raw.githubusercontent.com/ifflagged/Romeo/main/';
+var DAY = 864e5;
+
+var es = DATA.entries.map(function(e){
+  e._url = RAW2 + e.p;
+  e._imp = 'https://www.nsloon.com/openloon/import?plugin=' + encodeURIComponent(e._url);
+  e._ts = e.t ? Date.parse(e.t) : 0;
+  e._file = e.p.split('/').pop();
+  e._s = (e.n+' '+e.g+' '+e.a+' '+e.p+' '+e.d+' '+(e.al||'')).toLowerCase();
+  e._fav = false;
+  return e;
+});
+var byPath = {}; es.forEach(function(e){ byPath[e.p] = e; });
+
+/* ---------- favorites ---------- */
+var FAV_KEY = 'loon_favs_v1';
+var favs = {};
+try { favs = JSON.parse(localStorage.getItem(FAV_KEY) || '{}') || {}; } catch(err){ favs = {}; }
+function favSave(){ try{ localStorage.setItem(FAV_KEY, JSON.stringify(favs)); }catch(err){} }
+function favCount(){ return Object.keys(favs).length; }
+
+/* ---------- helpers ---------- */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function rel(ts){
+  var d = Date.now() - ts, m = d/6e4;
+  if (m < 1) return '刚刚';
+  if (m < 60) return Math.floor(m)+' 分钟前';
+  var h = m/60; if (h < 24) return Math.floor(h)+' 小时前';
+  var dd = h/24; if (dd < 30) return Math.floor(dd)+' 天前';
+  var mo = dd/30; if (mo < 12) return Math.floor(mo)+' 个月前';
+  return Math.floor(mo/12)+' 年前';
+}
+function absd(ts){ var d=new Date(ts); var p=function(n){return (n<10?'0':'')+n;};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function dayStart(off){ var d=new Date(); d.setHours(0,0,0,0); return d.getTime() - off*DAY; }
+function chanLabel(c){ return c==='Beta' ? 'Beta' : (c==='Official' ? '官方' : '主线'); }
+function isHidden(e){ return e.q==='bad' || e.q==='empty' || e.dep===1; }
+function qBadge(e){
+  if (e.q==='bad') return '<span class="badge qbad">失效</span>';
+  if (e.q==='empty') return '<span class="badge qbad">空壳</span>';
+  if (e.dep) return '<span class="badge dep">依赖组件</span>';
+  return '';
+}
+
+var toastEl = document.getElementById('toast'), toastT = null;
+function toast(msg){
+  toastEl.textContent = msg; toastEl.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove('show'); }, 1800);
+}
+function copyText(text){
+  var settled = false;
+  function done(ok){ if (settled) return; settled = true;
+    toast(ok ? '已复制源码地址，去 Loon 导入吧' : '复制失败，请手动复制'); }
+  function fallback(){
+    try{
+      var ta = document.createElement('textarea'); ta.value = text;
+      ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta);
+      ta.focus(); ta.select(); var ok = document.execCommand('copy'); document.body.removeChild(ta); done(ok);
+    }catch(err){ done(false); }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
+    var to = setTimeout(fallback, 700);
+    navigator.clipboard.writeText(text).then(function(){ clearTimeout(to); done(true); },
+      function(){ clearTimeout(to); fallback(); });
+  } else { fallback(); }
+}
+
+/* ---------- state ---------- */
+var S = { q:'', win:'all', author:'', channel:'', sort:'date', favOnly:false, showHidden:false, group:false };
+var LIMIT = 150, shown = 0, filtered = [];
+
+/* ---------- filter ---------- */
+function applyFilters(){
+  var now = Date.now();
+  var list = es.filter(function(e){
+    if (!S.showHidden && isHidden(e)) return false;
+    if (S.favOnly && !favs[e.p]) return false;
+    if (S.author && e.a !== S.author) return false;
+    if (S.channel === '__root'){ if (e.c) return false; }
+    else if (S.channel && e.c !== S.channel) return false;
+    if (S.win !== 'all'){
+      var from;
+      if (S.win==='today') from = dayStart(0);
+      else if (S.win==='3d') from = dayStart(2);
+      else if (S.win==='7d') from = dayStart(6);
+      else from = now - 30*DAY;
+      if (e._ts < from) return false;
+    }
+    if (S.q){
+      var terms = S.q.toLowerCase().split(/\s+/).filter(Boolean);
+      for (var i=0;i<terms.length;i++){ if (e._s.indexOf(terms[i]) < 0) return false; }
+    }
+    return true;
+  });
+  if (S.sort==='date') list.sort(function(a,b){ return b._ts - a._ts || a.n.localeCompare(b.n,'zh'); });
+  else if (S.sort==='name') list.sort(function(a,b){ return a.n.localeCompare(b.n,'zh') || b._ts-a._ts; });
+  else list.sort(function(a,b){ return a.a.localeCompare(b.a) || b._ts-a._ts; });
+  filtered = list;
+}
+
+/* ---------- render ---------- */
+var listEl = document.getElementById('list'), moreBtn = document.getElementById('more');
+function rowHTML(e, gitem){
+  var star = favs[e.p] ? ' on' : '';
+  var beta = e.c==='Beta' ? '<span class="badge beta">Beta</span>' : (e.c==='Official' ? '<span class="badge official">官方</span>' : '');
+  var date = e._ts ? rel(e._ts) + '<span class="abs">' + absd(e._ts) + '</span>' : '<span class="abs">未知</span>';
+  var desc = e.d ? '<span class="desc">' + esc(e.d) + '</span>' : '';
+  if (gitem){
+    return '<div class="gitem">'+
+      '<span class="t2">'+esc(e.n)+' '+beta+qBadge(e)+'</span>'+
+      '<span class="by">'+esc(e.a)+' · '+chanLabel(e.c)+'</span>'+
+      '<span class="dt" title="'+esc(e.t||'')+'">'+ (e._ts? absd(e._ts) : '—') +'</span>'+
+      '<span class="acts"><button class="btn primary" data-copy="'+esc(e.p)+'">复制</button>'+
+      '<a class="btn imp" href="'+esc(e._imp)+'" target="_blank" rel="noopener">导入</a></span>'+
+    '</div>';
+  }
+  return '<div class="row" data-p="'+esc(e.p)+'">'+
+    '<button class="star'+star+'" data-fav="'+esc(e.p)+'" title="关注/取消关注">★</button>'+
+    '<div class="main">'+
+      '<div class="t"><span class="nm">'+esc(e.n)+'</span>'+beta+qBadge(e)+'</div>'+
+      '<div class="s"><span class="mono">'+esc(e._file)+'</span> · '+esc(e.a)+' · '+chanLabel(e.c)+' '+desc+'</div>'+
+      '<div class="detail">'+
+        '<div class="path">'+esc(e.p)+'</div>'+
+        (e.d ? '<div class="kv"><b>说明：</b>'+esc(e.d)+'</div>' : '')+
+        '<div class="kv"><b>最近更新：</b>'+esc(e.t||'未知')+ (e.dm? '（插件内标注：'+esc(e.dm)+'）':'') +' · <b>文件大小：</b>'+ (e.sz>1024 ? Math.round(e.sz/1024)+' KB' : e.sz+' B') + (e.v?' · <b>版本：</b>'+esc(e.v):'') +'</div>'+
+        '<div class="kv"><b>源码地址：</b>'+esc(e._url)+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="side">'+
+      '<div class="date">'+date+'</div>'+
+      '<div class="acts"><button class="btn primary" data-copy="'+esc(e.p)+'">复制</button>'+
+      '<a class="btn imp" href="'+esc(e._imp)+'" target="_blank" rel="noopener" title="手机上点击直接导入 Loon">导入</a></div>'+
+    '</div>'+
+  '</div>';
+}
+function dayHeadHTML(label){ return '<div class="dayhead">'+label+'</div>'; }
+function dayLabel(ts){
+  if (ts >= dayStart(0)) return '今天';
+  if (ts >= dayStart(1)) return '昨天';
+  if (ts >= dayStart(6)) return '近 7 天';
+  return '更早';
+}
+function renderChunk(){
+  var frag = [], n = Math.min(shown + LIMIT, filtered.length), i;
+  var lastDay = listEl._lastDay || null;
+  for (i = shown; i < n; i++){
+    var e = filtered[i];
+    if (S.sort==='date'){
+      var dl = dayLabel(e._ts);
+      if (dl !== lastDay){ frag.push(dayHeadHTML(dl)); lastDay = dl; }
+    }
+    frag.push(rowHTML(e,false));
+  }
+  listEl.insertAdjacentHTML('beforeend', frag.join(''));
+  listEl._lastDay = lastDay;
+  shown = n;
+  moreBtn.style.display = shown < filtered.length ? '' : 'none';
+  moreBtn.textContent = '加载更多（还有 ' + (filtered.length - shown) + ' 条）';
+}
+function renderGroupView(){
+  var groups = {}, order = [];
+  filtered.forEach(function(e){
+    if (!groups[e.g]){ groups[e.g] = {g:e.g, items:[], latest:0}; order.push(e.g); }
+    groups[e.g].items.push(e); if (e._ts > groups[e.g].latest) groups[e.g].latest = e._ts;
+  });
+  var arr = order.map(function(k){ return groups[k]; });
+  if (S.sort!=='name') arr.sort(function(a,b){ return b.latest - a.latest; });
+  else arr.sort(function(a,b){ return a.g.localeCompare(b.g,'zh'); });
+  var frag = [];
+  arr.forEach(function(g,ix){
+    if (ix >= LIMIT) return;
+    frag.push('<div class="grow" data-g="'+esc(g.g)+'">'+
+      '<div class="ghead"><span class="gname">'+esc(g.g)+'</span>'+
+      '<span class="gcount">'+g.items.length+' 个版本</span>'+
+      '<span class="glatest">最近更新 '+(g.latest?absd(g.latest):'—')+'</span></div>'+
+      '<div class="gbody">'+ g.items.map(function(e){ return rowHTML(e,true); }).join('') +'</div>'+
+    '</div>');
+  });
+  if (arr.length > LIMIT) frag.push('<div class="empty">共 '+arr.length+' 个软件分组，仅显示前 '+LIMIT+' 个，输入关键词或选择作者可缩小范围。</div>');
+  listEl.innerHTML = frag.join('');
+}
+
+function render(reset){
+  applyFilters();
+  if (reset !== false){ listEl.innerHTML=''; listEl._lastDay = null; shown = 0; }
+  var nShow = filtered.length;
+  var nAll = es.filter(function(e){ return S.showHidden ? true : !isHidden(e); }).length;
+  document.getElementById('counter').innerHTML =
+    '显示 <b>' + nShow + '</b> / ' + nAll + ' 个模块' +
+    ((!S.showHidden && es.length > nAll) ? '（已隐藏 ' + (es.length - nAll) + ' 个失效/空壳/依赖组件）' : '') +
+    (S.favOnly ? '（只看关注）' : '');
+  if (!filtered.length){
+    listEl.innerHTML = '<div class="empty">没有符合条件的模块。试试清除搜索或放宽筛选。</div>';
+    moreBtn.style.display='none'; return;
+  }
+  if (S.group) renderGroupView(); else renderChunk();
+}
+
+/* ---------- controls wiring ---------- */
+var q = document.getElementById('q');
+var deb = null;
+q.addEventListener('input', function(){ clearTimeout(deb); deb = setTimeout(function(){ S.q = q.value.trim(); render(); }, 120); });
+document.addEventListener('keydown', function(ev){
+  if (ev.key==='/' && document.activeElement!==q){ ev.preventDefault(); q.focus(); q.select(); }
+  if (ev.key==='Escape' && document.activeElement===q){ q.value=''; S.q=''; render(); q.blur(); }
+});
+document.getElementById('chips').addEventListener('click', function(ev){
+  var chip = ev.target.closest('.chip'); if (!chip) return;
+  if (chip.id==='favchip'){ S.favOnly = !S.favOnly; chip.classList.toggle('on', S.favOnly); render(); return; }
+  if (chip.id==='reset') return;
+  var win = chip.getAttribute('data-win'); if (!win) return;
+  S.win = win;
+  [].forEach.call(document.querySelectorAll('.chip[data-win]'), function(c){ c.classList.toggle('on', c===chip); });
+  render();
+});
+document.getElementById('author').addEventListener('change', function(){ S.author = this.value; render(); });
+document.getElementById('channel').addEventListener('change', function(){ S.channel = this.value; render(); });
+document.getElementById('sort').addEventListener('change', function(){ S.sort = this.value; render(); });
+document.getElementById('viewgroup').addEventListener('change', function(){ S.group = this.checked; render(); });
+document.getElementById('showhidden').addEventListener('change', function(){ S.showHidden = this.checked; render(); });
+document.getElementById('reset').addEventListener('click', function(){
+  S.q=''; q.value=''; S.win='all'; S.author=''; S.channel=''; S.sort='date'; S.favOnly=false; S.group=false;
+  document.getElementById('author').value=''; document.getElementById('channel').value='';
+  document.getElementById('sort').value='date'; document.getElementById('viewgroup').checked=false;
+  document.getElementById('favchip').classList.remove('on');
+  [].forEach.call(document.querySelectorAll('.chip[data-win]'), function(c){ c.classList.toggle('on', c.getAttribute('data-win')==='all'); });
+  render(); updateReset();
+});
+function updateReset(){
+  var active = S.q || S.win!=='all' || S.author || S.channel || S.sort!=='date' || S.favOnly || S.group;
+  document.getElementById('reset').style.display = active ? '' : 'none';
+}
+moreBtn.addEventListener('click', function(){ renderChunk(); });
+
+listEl.addEventListener('click', function(ev){
+  var t = ev.target;
+  var copyBtn = t.closest('[data-copy]');
+  if (copyBtn){ var e1 = byPath[copyBtn.getAttribute('data-copy')]; if (e1) copyText(e1._url); ev.stopPropagation(); return; }
+  var favBtn = t.closest('[data-fav]');
+  if (favBtn){
+    var p = favBtn.getAttribute('data-fav');
+    if (favs[p]) delete favs[p]; else favs[p] = 1;
+    favSave(); favBtn.classList.toggle('on', !!favs[p]);
+    document.getElementById('favn').textContent = favCount() ? (' '+favCount()) : '';
+    if (S.favOnly) render();
+    return;
+  }
+  var grow = t.closest('.grow');
+  if (grow){ grow.classList.toggle('open'); return; }
+  var row = t.closest('.row');
+  if (row && !t.closest('a')){ row.classList.toggle('open'); }
+});
+document.addEventListener('click', updateReset, true);
+
+/* ---------- init ---------- */
+(function init(){
+  var authors = {};
+  es.forEach(function(e){ if (!isHidden(e)) authors[e.a] = (authors[e.a]||0)+1; });
+  var sel = document.getElementById('author');
+  Object.keys(authors).sort().forEach(function(a){
+    var o = document.createElement('option'); o.value = a; o.textContent = a + '（' + authors[a] + '）'; sel.appendChild(o);
+  });
+  var g = DATA.generated || '?';
+  document.getElementById('meta').innerHTML =
+    '共 <b>'+es.length+'</b> 个模块 · <b>'+Object.keys(authors).length+'</b> 位作者 · 数据更新于 <b>'+esc(g)+'</b>' +
+    ' <span class="dot"></span> <a href="https://github.com/ifflagged/Romeo" target="_blank" rel="noopener">源仓库 ifflagged/Romeo</a>';
+  document.getElementById('foot').innerHTML =
+    '数据：每小时间隔由源仓库同步上游作者；更新时间取文件最后提交时间（commit '+esc(DATA.commit||'')+'）。';
+  document.getElementById('favn').textContent = favCount() ? (' '+favCount()) : '';
+  render();
+})();
+})();
+</script>
+</body>
+</html>

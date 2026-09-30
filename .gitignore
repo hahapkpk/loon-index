@@ -1,0 +1,5 @@
+cache/
+data.js
+__pycache__/
+*.pyc
+analyze_names.py
